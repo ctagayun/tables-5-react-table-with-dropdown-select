@@ -7,7 +7,16 @@ import * as React from 'react';
 import './App.css'
 import { useTheme } from '@table-library/react-table-library/theme';
 
+import { useRowSelect, //will enable users to select a row
+         HeaderCellSelect,
+         CellSelect,
+         SelectTypes,
+       //  SelectClickTypes, //enforce a row select only by checkbox 
+                           //and not by row click too:
+} from '@table-library/react-table-library/select';
 
+//replace the select components entirely with custom components.
+//import MaterialCheckbox from '@mui/material/Checkbox';
 
 //Import stuff from React Table Library
 import {
@@ -71,15 +80,108 @@ const App = () => {
   //Using theme
   const theme = useTheme(THEME);
 
+  //Initialize useRowSelect with table data
+  //and create notifier to get selected rows from table
+  //using useRowSelect() hook
+
+  /*  If a user clicks on a row, it selects only 
+    one row. If a user clicks on multiple checkboxes, it keeps 
+    the selection state over multiple rows. 
+      If you want to change the default single/multi select 
+    behavior, then you could use the useRowSelect() hook options. 
+    In this way, you can inverse the behavior (example below), 
+    or enforce only single or multi select:
+  */
+  const select = useRowSelect(data, 
+    {
+    onChange: onSelectChange,
+    },
+    {
+      rowSelect: SelectTypes.MultiSelect,
+      buttonSelect: SelectTypes.SingleSelect,
+    }
+  );
+
+  /*  If you don't want to have the seamless transition from single 
+    select to multi select, you can disable the carry-forward feature.
+    By doing this, when a user performs a single select followed by 
+    a multi select, the multi select will exclude the previous 
+     single select in its final selection state:
+  */
+  // const select = useRowSelect(
+  //   data,
+  //   {
+  //     onChange: onSelectChange,
+  //   },
+  //   {
+  //     isCarryForward: false,
+  //   }
+  // );
+
+  /* By using the selection options, we can enforce a row 
+     select only by checkbox and not by row click too:
+  */
+  // const select = useRowSelect(
+  //   data,
+  //   {
+  //     onChange: onSelectChange,
+  //   },
+  //   {
+  //     clickType: SelectClickTypes.ButtonClick,
+  //   }
+  // );
+
+ /*
+   Sometimes a user wants to have an initial select state. 
+   This can be achieved with the useRowSelect hook too, by 
+   passing in a default selection state:
+ */
+    // default single select
+    // const select = useRowSelect(data, {
+    //   state: { id: '1' },
+    //   onChange: onSelectChange,
+    // });
+
+    // default multi select
+    // const select = useRowSelect(data, {
+    //   state: { ids: ['2', '3'] },
+    //   onChange: onSelectChange,
+    // });
+
+  //This is the callback function. It gives you access to the 
+  //"action" which triggered the selection change and to the 
+  //current selection "state" of your table.
+  function onSelectChange(action, state){
+     console.log(action, state);
+  }
+
   /*Table component accepts {data} object as prop with
       "nodes property". Theme is another prop.
+    First, the top-level checkbox in the header "<HeaderCellSelect />
+    of our table enables a user to select all rows by checkbox, 
+    and it also allows a user to unselect all the rows.
+
+    Second, each table row has a checkbox for selecting itself. 
+       <CellSelect item={item}
+    You may notice that the row select and the checkbox select 
+    behave a little different by default: whereas the row select 
+    acts as a single select, the checkbox acts as multi select.
+
+    In other words, if a user clicks on a row, it selects only 
+    one row. If a user clicks on multiple checkboxes, it keeps 
+    the selection state over multiple rows. If you want to 
+    change the default single/multi select behavior, then you 
+    could use the useRowSelect options. In this way, you can 
+    inverse the behavior (example below), or enforce only single 
+    or multi select:
   */ 
   return (
-      <Table data={data} theme={theme}> 
+      <Table data={data} theme={theme} select={select}> 
         {(tableList) => (
           <> 
             <Header>
-              <HeaderRow>                      
+              <HeaderRow>
+                <HeaderCellSelect />                       
                 <HeaderCell>Task</HeaderCell>
                 <HeaderCell>Deadline</HeaderCell>
                 <HeaderCell>Type</HeaderCell>
@@ -89,6 +191,7 @@ const App = () => {
             <Body>
               {tableList.map((item) => (
                 <Row key={item.id} item={item}>
+                    <CellSelect item={item} />  
                     <Cell>{item.name}</Cell>
                     <Cell>
                       {item.deadline.toLocaleDateString('en-US',
